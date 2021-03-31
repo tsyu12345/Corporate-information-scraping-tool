@@ -1,40 +1,47 @@
-
+from openpyxl.worksheet.dimensions import SheetFormatProperties
 import requests as rq
-import openpyxl
-from bs4 import BeautifulSoup
-from requests.exceptions import SSLError 
+from selenium import webdriver
+from openpyxl import styles as pxstyle
+import openpyxl as px 
+from bs4 import BeautifulSoup as bs 
+import ssl, socket
 
-name = "【高林様】抽出依頼リスト - コピー.xlsx"
-book = openpyxl.load_workbook(name)
+#sheetの読み込み
+file_name = "./【高林様】抽出依頼リスト - コピー.xlsx"
+book = px.load_workbook(file_name)
 sheet = book.worksheets[0]
 
-#list of urls
-urls = []
-for url in sheet["C"]:
-    if url.value != None or url.value != "ドメイン名":
-        urls.append(url.value)
-        print(url.value)
+#サイトの存在確認
+fill = pxstyle.PatternFill(patternType='solid', fgColor='FF0000', bgColor='FF0000')#応答がないサイトには赤色で塗る
+for i in range(3, sheet.max_row):
+    index = "C"+str(i)
+    url = sheet[index].value
+    print(index + " . " + url + " : ", end="")
+    try:
+        respons = rq.get("http://www." + url)
+        if respons.status_code != 200:#閲覧できないとき
+            print(respons.status_code)
+            sheet[index].fill = fill
+        else:#通常通り
+            page_url = respons.url
+            print(respons.status_code)
+            print(page_url)
+            #SSLかどうか（httpsで始まっているかどうか）
+            if page_url.startswith("https://"):
+                print("SSL 有")
+                sheet["H" + str(i)].value = "有"
+            else:
+                sheet["H" + str(i)].value = "無"
+            
+    except:#そもそもサイトが存在しない？？
+        print(respons.status_code)
+        sheet[index].fill = fill
+        pass
+book.save(file_name)
 
-print(urls[2])
 
-#サイトが応答するか（存在するか確認）
-erorr_site = []
-for i in range(2, len(urls)):
-    respons = rq.get("http://" + urls[i])
-    site_status = respons.status_code
-    print(str(i) + ". " + urls[i] + " : ", end="")
-    if site_status != 200:
-        print("site Erorr!!, please check this page")
-        erorr_site.append(urls[i])
-        sheet.cell(row=i+1, column=1, value="x")
-book.save(name)
 
-#スクレイピング
-def scrap(html):
-    soup = BeautifulSoup()
-
-    
+        
 
 
 
- 
