@@ -1,6 +1,3 @@
-from logging import NOTSET
-from urllib.parse import scheme_chars
-from openpyxl.worksheet.dimensions import SheetFormatProperties
 import requests as rq
 from selenium import webdriver
 from openpyxl import styles as pxstyle
@@ -8,8 +5,7 @@ import openpyxl as px
 from bs4 import BeautifulSoup as bs 
 import time
 import re
-
-from selenium.webdriver.chrome.webdriver import WebDriver
+import pyperclip
 
 
 #sheetの読み込み
@@ -50,47 +46,61 @@ for i in range(3, sheet.max_row):
         pass
 book.save(file_name)
 """
-
 #会社情報のスクレイピング
+driver = webdriver.Chrome(executable_path="./chromedriver_win32/chromedriver.exe")
+driver.get("https://www.google.co.jp/maps/@35.3646982,139.5381833,15z?hl=ja")
+time.sleep(3)
 def com_info(com_name, com_domein, index):
-    driver = webdriver.Chrome(executable_path="./chromedriver_win32/chromedriver.exe")
-    driver.get("https://www.google.co.jp/maps/@35.3646982,139.5381833,15z?hl=ja")
+    search = driver.find_element_by_xpath('//*[@id="searchboxinput"]')
+    search.clear()
+    search.send_keys(com_name)
+    search = driver.find_element_by_xpath('//*[@id="searchbox-searchbutton"]')
+    search.click()
     time.sleep(3)
-    serch = driver.find_element_by_xpath('//*[@id="searchboxinput"]')
-    serch.send_keys(com_name)
-    driver.find_element_by_xpath('//*[@id="searchbox-searchbutton"]')
-    driver.click()
-    time.sleep(3)
+
+    #ソースの抽出
+    map_data = driver.page_source
+    soup = bs(map_data, 'lxml')
+    info = soup.find_all(class_="ugiz4pqJLAG__primary-text gm2-body-2")
+
     #ドメインが合っているか確認
-    domein = driver.find_element_by_xpath('//*[@id="pane"]/div/div[1]/div/div/div[10]/div[2]/button/div[1]/div[2]/div[1]').text
-    if domein != com_domein:
-        print("ドメイン名が違います")
-        return False #間違っていれば関数を終了
-    else:
+    try:
+        domein = info[1].text.strip()
+    except:
+        return False
+
+    if domein == com_domein:
         pass
-    #電話番号の抽出
-    tel = driver.find_element_by_xpath('//*[@id="pane"]/div/div[1]/div/div/div[10]/div[3]/button/div[1]/div[2]/div[1]').text
-    #住所の抽出
-    driver.find_element_by_xpath('//*[@id="searchbox-searchbutton"]')
-    driver.click()
-    time.sleep(3)
-    address_data = driver.find_element_by_xpath('//*[@id="pane"]/div/div[1]/div/div/div[10]/div[1]/button/div[1]/div[2]/div[1]').text
-    all_address = address_data[9:]
-    address_com = re.split('[都道府県]', all_address)#県名とそれ以降を分離
-    add1 = address_com[0]#県
+    else:
+        return False
+    #電話
+    tel = info[2].text.strip()
+    #住所
+    address_data = info[0].text.strip()
+    all_address = address_data[10:]
+    pre_name = re.match('東京都|北海道|(?:京都|大阪)府|.{2,3}県' , all_address)
+    address_com = re.split('東京都|北海道|(?:京都|大阪)府|.{2,3}県', all_address)#県名とそれ以降を分離
+    add1 = pre_name.group()#県
     add2 = address_com[1]#それ以降
     
     #指定のセルへ書き込み
+    print(tel)
+    print(add1)
+    print(add2)
     sheet["E" + str(index)].value = tel
     sheet["F" + str(index)].value = add1
     sheet["G" + str(index)].value = add2
+    book.save(file_name)
 
-for i in range(3, 10):
+for i in range(3, 101):
     company = sheet["D" + str(i)].value
     com_domein = sheet["C" + str(i)].value
-    if company != None:
-        print("writing_data of " + company)    
-        write = com_info(company, com_domein, i)
+    if company != None or company != "取得不可" or company != "不明なエラー":
+        try:
+            print("writing_data of " + company)    
+            write = com_info(company, com_domein, i)
+        except:
+            pass
         if write == False:
             print("%s : domein Error." % (sheet["D" + str(i)].value))
 
