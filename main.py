@@ -129,7 +129,7 @@ def com_info(com_name, com_domein, index):
     #電話
     pattern = r'[\(]{0,1}[0-9]{2,4}[\)\-\(]{0,1}[0-9]{2,4}[\)\-]{0,1}[0-9]{3,4}'
     tel = re.findall(pattern, info[2].text.strip())
-
+    
     #住所
     address_data = info[0].text.strip()
     all_address = address_data[10:]
@@ -148,13 +148,19 @@ def com_info(com_name, com_domein, index):
     book.save(file_name)
 
 
-for i in range(307, sheet.max_row):
+for i in range(3, 320):
     company = sheet["D" + str(i)].value
     com_domein = sheet["C" + str(i)].value
     if company != None or company != "取得不可" or company != "不明なエラー":
         try:
             print("writing_data of " + company)    
             write = com_info(company, com_domein, i)
+            tel = sheet["E" + str(i)].value
+            tel.replace("[", "")
+            tel.replace("]", "")
+            tel.replace("'", "")
+            print(tel)
+            sheet["E" + str(i)].value = tel
             if write == False:
                 print("%s : domein Error." % (sheet["D" + str(i)].value))
         except:
