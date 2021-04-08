@@ -56,7 +56,10 @@ class Job:
             "スクール案内",
             "教室について",
             "スクールについて",
-            "教室概要"
+            "教室概要",
+            "施設紹介",
+            "施設概要",
+            "施設案内",
         ]
         
         for i in Link_names:
@@ -84,7 +87,7 @@ class Job:
             for i, text in enumerate(all_text_list):
                 if text is "":
                     all_text_list.pop(i)
-            com_name_list = ["会社名", "社名", "商号", "屋号", "店舗名", "店名", "名称", "教室名", "院名"]
+            com_name_list = ["会社名", "社名", "商号", "屋号", "店舗名", "店名", "名称", "教室名", "院名", "施設名"]
             com_tel_list = ["電話番号", "TEL", "tel", "電話", "連絡先", "Tel"]
             com_add_list = ["所在地", "住所", "本社所在地", "本社住所"]
             print(all_text_list)
@@ -129,6 +132,14 @@ class Job:
         except:
             print("writing error!!")
             return False
+
+    def check(self, index, pattern):#形式不備の自動チェック
+            file_name = "./【高林様】抽出依頼リスト - コピー.xlsx"
+            book = px.load_workbook(file_name)
+            fill_yel = pxstyle.PatternFill(patternType='solid', fgColor='FFFF00', bgColor='FFFF00')
+            sheet = book.worksheets[0]
+            #社名
+            sheet[""]
 
     
 job = Job('chromedriver_win32/chromedriver.exe')
