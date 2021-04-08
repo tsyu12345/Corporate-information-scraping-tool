@@ -1,3 +1,4 @@
+from os import replace
 from openpyxl.worksheet.dimensions import SheetDimension
 import requests as rq
 from selenium import webdriver
@@ -133,14 +134,52 @@ class Job:
             print("writing error!!")
             return False
 
-    def check(self, index, pattern):#形式不備の自動チェック
+    def check(self, index):#形式不備の自動チェック
             file_name = "./【高林様】抽出依頼リスト - コピー.xlsx"
             book = px.load_workbook(file_name)
             fill_yel = pxstyle.PatternFill(patternType='solid', fgColor='FFFF00', bgColor='FFFF00')
             sheet = book.worksheets[0]
             #社名
-            sheet[""]
-
+            if sheet["D" + str(index)].value == None:
+                sheet["D" + str(index)].fill = fill_yel
+            #TEL
+            try:
+                match = re.match('^0\d{2,3}-\d{1,4}-\d{4}$', sheet["E" + str(index)].value)
+            except:
+                match = False
+            if match:
+                print("No." + str(index) + "TEL number is OK")
+            else:
+                sheet["E" + str(index)].fill = fill_yel
+            #住所（県名）
+            if sheet["F" + str(index)].value == None:
+                sheet["F" + str(index)].fill = fill_yel
+            try:
+                if " " in sheet["F" + str(index)].value:
+                    sheet["F" + str(index)].value = replace(" ", "")
+                if "　" in sheet["F" + str(index)].value:
+                    sheet["F" + str(index)].value = replace("　", "")
+                match = re.match('東京都|北海道|(?:京都|大阪)府|.{2,3}県', sheet["F" + str(index)].value)
+                if match:
+                    print("No." + str(index) + "prefecture name is OK")
+                else:
+                    sheet["F" + str(index)].fill = fill_yel
+            except:
+                pass
+            #住所の数字を半角へ変換
+            if sheet["F" + str(index)].value == None:
+                sheet["F" + str(index)].fill = fill_yel
+            try:
+                if " " in sheet["F" + str(index)].value:
+                    sheet["G" + str(index)].value = replace(" ", "")
+                if "　" in sheet["F" + str(index)].value:
+                    sheet["G" + str(index)].value = replace("　", "")
+                trans_table = str.maketrans({"１":"1", "２":"2", "３":"3", "４":"4", "５":"5", "６":"6", "７":"7", "８":"8", "９":"9"})
+                text = sheet["G" + str(index)].value
+                text.translate(trans_table)
+            except:
+                pass
+            book.save(file_name)
     
 job = Job('chromedriver_win32/chromedriver.exe')
 def main(index):
@@ -155,6 +194,7 @@ def main(index):
             print("Failed")
             return False
         job.write_excel(index, datas)
+    job.check(index)
 
 for i in range(3, 2391 + 1):
     main(i)

@@ -148,23 +148,24 @@ def com_info(com_name, com_domein, index):
     book.save(file_name)
 
 
-for i in range(3, 320):
+for i in range(3, sheet.max_row):
     company = sheet["D" + str(i)].value
     com_domein = sheet["C" + str(i)].value
-    if company != None or company != "取得不可" or company != "不明なエラー":
-        try:
-            print("writing_data of " + company)    
-            write = com_info(company, com_domein, i)
-            tel = sheet["E" + str(i)].value
-            tel.replace("[", "")
-            tel.replace("]", "")
-            tel.replace("'", "")
-            print(tel)
-            sheet["E" + str(i)].value = tel
-            if write == False:
-                print("%s : domein Error." % (sheet["D" + str(i)].value))
-        except:
-            pass
+    if company != None:
+        if sheet["G" + str(i)].value == None:
+            try:
+                print("writing_data of " + company)    
+                write = com_info(company, com_domein, i)
+                tel = sheet["E" + str(i)].value
+                tel.replace("[", "")
+                tel.replace("]", "")
+                tel.replace("'", "")
+                print(tel)
+                sheet["E" + str(i)].value = tel
+                if write == False:
+                    print("%s : domein Error." % (sheet["D" + str(i)].value))
+            except:
+                pass
 
 
     
